@@ -46,13 +46,13 @@ class MinioService:
         except S3Error as e:
             print(f"Error creating bucket: {e}")
     
-    def upload_image(self, file, folder: str = "products") -> Optional[str]:
+    def upload_image(self, file, folder: str = "") -> Optional[str]:
         """
         Upload ảnh lên MinIO
         
         Args:
             file: File object từ request.FILES
-            folder: Thư mục lưu trữ trong bucket
+            folder: Thư mục lưu trữ trong bucket (optional)
             
         Returns:
             URL của ảnh đã upload hoặc None nếu thất bại
@@ -60,7 +60,10 @@ class MinioService:
         try:
             # Tạo tên file unique
             file_extension = os.path.splitext(file.name)[1]
-            unique_filename = f"{folder}/{uuid.uuid4()}{file_extension}"
+            if folder:
+                unique_filename = f"{folder}/{uuid.uuid4()}{file_extension}"
+            else:
+                unique_filename = f"{uuid.uuid4()}{file_extension}"
             
             # Upload file
             self.client.put_object(

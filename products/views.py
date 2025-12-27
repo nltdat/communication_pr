@@ -229,7 +229,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         
         # Upload ảnh lên MinIO
         image_file = serializer.validated_data['image']
-        image_url = minio_service.upload_image(image_file, folder='products')
+        image_url = minio_service.upload_image(image_file)  # Bỏ folder parameter
         
         if not image_url:
             return Response(

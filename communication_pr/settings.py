@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -152,9 +153,9 @@ REST_FRAMEWORK = {
 }
 
 # MinIO Configuration
-MINIO_ENDPOINT = 'minio:9000'  # Tên service trong docker-compose
+MINIO_ENDPOINT = 'minio:9000' 
 MINIO_ACCESS_KEY = 'minioadmin'
 MINIO_SECRET_KEY = 'minioadmin123'
 MINIO_USE_SSL = False
 MINIO_BUCKET_NAME = 'products'
-MINIO_PUBLIC_URL = 'http://localhost:9000'  # URL public để truy cập từ bên ngoài
+MINIO_PUBLIC_URL = os.getenv('MINIO_PUBLIC_URL', 'http://localhost:9000') 

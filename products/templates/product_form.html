@@ -2,127 +2,155 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Quản lý sản phẩm</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f4f4;
-            padding: 20px;
+        :root{
+            --bg: #f6f8fb;
+            --card: #ffffff;
+            --muted: #6b7280;
+            --primary: #0f62fe;
+            --accent: #06b6d4;
+            --radius: 10px;
         }
 
-        .form-container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            width: 450px;
+        *{box-sizing: border-box}
+        body{
+            margin:0;
+            font-family: Inter, Roboto, Arial, sans-serif;
+            background: var(--bg);
+            color:#111827;
+            padding:24px;
         }
 
-        .form-container h2 {
-            margin-top: 0;
+        .container{
+            max-width:1200px;
+            margin:0 auto;
+            display:grid;
+            grid-template-columns: 360px 1fr;
+            gap:20px;
+            align-items:start;
         }
 
-        .table-container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            width: 100%;
+        @media (max-width:900px){
+            .container{grid-template-columns:1fr}
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
+        .card{
+            background:var(--card);
+            border-radius:var(--radius);
+            padding:18px;
+            box-shadow:0 6px 18px rgba(15,23,42,0.06);
         }
 
-        table, th, td {
-            border: 1px solid #ccc;
+        h1,h2{margin:0 0 12px}
+        h1{font-size:20px}
+        label{display:block;margin-top:10px;font-size:13px;color:var(--muted)}
+        input[type="text"], input[type="number"], textarea, input[type="file"]{
+            width:100%;
+            padding:10px 12px;
+            margin-top:6px;
+            border-radius:8px;
+            border:1px solid #e6edf3;
+            background:#fafafa;
+            font-size:14px;
         }
 
-        th {
-            background: #f0f0f0;
-            padding: 8px;
-        }
+        textarea{min-height:88px;resize:vertical}
 
-        td {
-            padding: 8px;
-        }
+        .btn-row{display:flex;gap:8px;margin-top:14px}
+        .btn{padding:10px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:600}
+        .btn.primary{background:var(--primary);color:#fff}
+        .btn.ghost{background:transparent;border:1px solid #e6edf3;color:var(--muted)}
 
-        input[type="text"], input[type="number"] {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-        }
+        .error{color:#b91c1c;margin-bottom:10px}
 
-        button {
-            padding: 10px 14px;
-            background: #007bff;
-            color: white;
-            border: none;
-            margin-top: 10px;
-            cursor: pointer;
-        }
+        /* product list */
+        .list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
 
-        .error {
-            color: red;
-            margin-bottom: 10px;
-        }
+        .product-card{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:10px;border:1px solid #eef2f7;background:#fff}
+        .thumb{width:72px;height:72px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;overflow:hidden}
+        .thumb img{width:100%;height:100%;object-fit:cover}
+        .meta{flex:1}
+        .meta h3{margin:0;font-size:15px}
+        .meta p{margin:6px 0 0;color:var(--muted);font-size:13px}
+        .meta .price{color:#0b7285;font-weight:700;margin-top:6px}
 
+        .small{font-size:12px;color:var(--muted)}
     </style>
+    <script>
+        function showPreview(event){
+            const file = event.target.files && event.target.files[0];
+            const img = document.getElementById('image-preview');
+            if(!file){ img.src=''; img.style.display='none'; return }
+            const url = URL.createObjectURL(file);
+            img.src = url; img.style.display='block';
+        }
+    </script>
 </head>
 <body>
 
-<div class="form-container">
-    <h2>Thêm sản phẩm</h2>
+<div class="container">
+    <div class="card">
+        <h1>Thêm / Cập nhật sản phẩm</h1>
 
-    {% if error %}
-        <div class="error">{{ error }}</div>
-    {% endif %}
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
 
-    <form method="post">
-        {% csrf_token %}
-        <label>Tên sản phẩm:</label>
-        <input type="text" name="name" required>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
 
-        <label>Giá:</label>
-        <input type="number" name="price" required>
+            <label for="id_name">Tên sản phẩm</label>
+            <input id="id_name" type="text" name="name" value="{{ form.name.value|default_if_none:'' }}" required>
 
-        <button type="submit">Lưu</button>
-    </form>
-</div>
+            <label for="id_price">Giá (VND)</label>
+            <input id="id_price" type="number" name="price" value="{{ form.price.value|default_if_none:'' }}" required>
 
-<div class="table-container">
-    <h2>Danh sách sản phẩm</h2>
+            <label for="id_description">Mô tả</label>
+            <textarea id="id_description" name="description">{{ form.description.value|default_if_none:'' }}</textarea>
 
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Tên</th>
-                <th>Giá</th>
-                <th>Mô tả</th>
-                <th>Trạng thái</th>
-                <th>Ảnh</th>
-                <th>Post ID</th>
-            </tr>
-        </thead>
+            <label for="id_image">Ảnh (jpg/png/webp)</label>
+            <input id="id_image" type="file" name="image" accept="image/*" onchange="showPreview(event)">
+            <img id="image-preview" src="" alt="preview" style="display:none;margin-top:8px;width:100%;border-radius:8px;max-height:240px;object-fit:cover">
 
-        <tbody>
+            <div class="btn-row">
+                <button class="btn primary" type="submit">Lưu</button>
+                <a class="btn ghost" href="?">Hủy</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="list-header">
+            <h2>Danh sách sản phẩm</h2>
+            <div class="small">Tổng: {{ products|length }}</div>
+        </div>
+
+        <div class="grid">
             {% for p in products %}
-            <tr>
-                <td>{{ p.id }}</td>
-                <td>{{ p.name }}</td>
-                <td>{{ p.price }}</td>
-                <td>{{ p.description }}</td>
-                <td>{{ p.status }}</td>
-                <td>{{ p.image }}</td>
-                <td>{{ p.post_id }}</td>
-            </tr>
+            <div class="product-card">
+                <div class="thumb">
+                    {% if p.image %}
+                        <img src="{{ p.image }}" alt="{{ p.name }}">
+                    {% else %}
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="24" height="24" rx="4" fill="#eef2f7"></rect>
+                            <path d="M7 14l3-4 2 3 3-4 3 5H7z" fill="#c6d5df"></path>
+                        </svg>
+                    {% endif %}
+                </div>
+                <div class="meta">
+                    <h3>{{ p.name }}</h3>
+                    <p class="small">ID: {{ p.id }} • Post: {{ p.post_id|default:'-' }}</p>
+                    <div class="price">{{ p.price }} VND</div>
+                    {% if p.description %}<p class="small">{{ p.description|truncatechars:80 }}</p>{% endif %}
+                </div>
+            </div>
             {% endfor %}
-        </tbody>
-    </table>
+        </div>
+    </div>
 </div>
 
 </body>

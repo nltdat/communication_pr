@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: communication_api
+    volumes:
+      - .:/app
+    ports: 
+      - "8011:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:password@postgres:5432/communication_db
+    depends_on:
+      postgres:
+        condition: service_started
+      minio:
+        condition: service_started
+    networks:
+      - communication_network
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo '⏳ Waiting for services...' &&
+        sleep 5 &&
+        echo '📦 Running migrations...' &&
+        python manage.py migrate --noinput &&
+        echo '🗂️ Initializing MinIO...' &&
+        python init_minio.py || echo '⚠️ MinIO initialization warning' &&
+        echo '🎉 Starting Django server...' &&
+        python manage.py runserver 0.0.0.0:8000
+      "
+
+  postgres:
+    image: postgres:15
+    container_name: communication_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=communication_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5555:5432"
+    networks:
+      - communication_network
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5080:80"
+    networks:
+      - communication_network
+    depends_on:
+      - postgres
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: communication_n8n
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin
+      
+      - N8N_PORT=5678              
+      - N8N_PROTOCOL=http
+      - N8N_HOST=localhost
+      - WEBHOOK_URL=http://localhost:5678/
+      - N8N_EDITOR_BASE_URL=http://localhost:5678/
+    volumes:
+      - n8n_data:/home/node/.n8n      
+    ports:
+      - "5678:5678"
+    networks:
+      - communication_network
+    restart: always
+
+  minio:
+    image: minio/minio:latest
+    container_name: communication_minio
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin123
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - communication_network
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  n8n_data:
+  pgadmin_data:
+  minio_data:
+
+networks:
+  communication_network:
+    driver: bridge

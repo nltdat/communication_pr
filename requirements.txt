@@ -1,0 +1,8 @@
+asgiref==3.9.2
+Django==5.2.7
+djangorestframework==3.16.1
+psycopg2-binary==2.9.10
+sqlparse==0.5.3
+minio==7.2.0
+Pillow==10.1.0
+drf-yasg==1.21.7
